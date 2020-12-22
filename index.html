@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title></title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            height:80%;
+            width: 80%;
+        }
+
+    </style>
+</head>
+<body>
+    <div id='map'></div>
+    <script>
+
+    var data= 'data/sl_rst.geojson'
+
+    mapboxgl.accessToken = 'pk.eyJ1Ijoid3V6ZWt1biIsImEiOiJja2l3ZW9lNnUwY3k2MnRvZGMyOWllYXJlIn0.uroCzpaFEjccM0RasCvOOQ';
+    var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
+    center: [-74.5, 40], // starting position [lng, lat]
+    zoom: 9 // starting zoom
+    });
+
+    map.on("load",function(){
+
+        map.addLayer({
+                    "id": "restaurants",
+                    "type": "symbol",
+                    "source": {
+                        "type": "geojson",
+                        "data": data
+                    },
+                     "layout": {
+                        "icon-image": "restaurant-15",
+                        "text-field": "{name}",
+                        "text-size": 8,
+                        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+                        "text-offset": [0, 0.6],
+                        "text-anchor": "top"
+                    }
+        });              
+    })
+
+    map.on('click', 'restaurants', function (e) {
+                var restaurants = e.features[0].properties,
+                    popOverContet;
+
+                console.log(e.features[0].geometry.coordinates)
+
+                for (prop in restaurants) {
+
+                    popOverContet += restaurants[prop] + '</br>';
+                }
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.features[0].geometry.coordinates[0][0])
+                    .setHTML(popOverContet)
+                    .addTo(map);
+
+            map.on('mouseenter', 'restaurants', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'restaurants', function () {
+                map.getCanvas().style.cursor = '';
+            });
+    });
+
+
+    </script>
+</body>
+</html>
