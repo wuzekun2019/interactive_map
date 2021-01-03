@@ -1,87 +1,217 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title></title>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css' rel='stylesheet' />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="utf-8" />
+<title>Add a new layer below labels</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            height:80%;
-            width: 80%;
-        }
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 90%;
+    }
 
-    </style>
+	.postInfo {
+  	position: absolute;
+  	font-family: sans-serif;
+  	margin-top: 5px;
+  	margin-left: 5px;
+  	padding: 5px;
+  	width: 30%;
+  	border: 2px solid black;
+  	font-size: 14px;
+  	color: #222;
+  	background-color: #fff;
+  	border-radius: 3px;
+	}
+</style>
 </head>
 <body>
-    <div id='map'></div>
-    <script>
 
-    var data= 'data/sl_rst.geojson'
+<div id="map"></div>
 
-    mapboxgl.accessToken = 'pk.eyJ1Ijoid3V6ZWt1biIsImEiOiJja2l3ZW9lNnUwY3k2MnRvZGMyOWllYXJlIn0.uroCzpaFEjccM0RasCvOOQ';
-    var map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
-    center: [-74.5, 40], // starting position [lng, lat]
-    zoom: 9 // starting zoom
-    });
+<div class='postInfo'>
+	<div><strong>postId:</strong> <span id='post'></span></div>
+	<div><strong>userId:</strong> <span id='user'></span></div>
+	<div><strong>Date:</strong> <span id='date'></span></div>
+	<div><strong>Time:</strong> <span id='time'></span></div>
+</div>
 
-    map.on("load",function(){
+<script>
 
-        map.addLayer({
-                    "id": "restaurants",
-                    "type": "symbol",
-                    "source": {
-                        "type": "geojson",
-                        "data": data
-                    },
-                     "layout": {
-                        "icon-image": "restaurant-15",
-                        "text-field": "{name}",
-                        "text-size": 8,
-                        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
-                        "text-offset": [0, 0.6],
-                        "text-anchor": "top"
-                    }
-        });              
-    })
+var postIdDisplay = document.getElementById('post');
+var userIdDisplay = document.getElementById('user');
+var dateDisplay = document.getElementById('date');
+var timeDisplay = document.getElementById('time');
 
-    map.on('click', 'restaurants', function (e) {
-                var restaurants = e.features[0].properties,
-                    popOverContet;
+function findMinMax(arr) {
+  let min_lat = arr[0].latitude, max_lat = arr[0].latitude,
+  	  min_lgt = arr[0].longitude, max_lgt = arr[0].longitude;
+  for (let i = 1, len=arr.length; i < len; i++) {
+    let u = arr[i].latitude, v=arr[i].longitude;
+    min_lat = (u < min_lat) ? u : min_lat;
+	max_lat = (u > max_lat) ? u : max_lat;
+	min_lgt = (v < min_lgt) ? v : min_lgt;
+    max_lgt = (v > max_lgt) ? v : max_lgt;
+  }
+  return [min_lat, max_lat,min_lgt, max_lgt];
+}
 
-                console.log(e.features[0].geometry.coordinates)
+function updateMap(data) {
+	var test = [];
+	let i=0
+    data.forEach(function(d) {
+		var str = "hello"
+		i=i+1
+		if(typeof(d.text) == 'string') {
+			test.push({"type": "Feature", "properties": { "id":d.id, "date_posted": d.date_posted,"time_posted":d.time_posted, "text": d.text, "user_id": d.user_id },
+			"geometry": {"type": "Point", "coordinates": [d.longitude, d.latitude]},"id": i});
+		  } 
+	});
+	return test
+}
 
-                for (prop in restaurants) {
+var dataset
+fetch("data/data.json")
+	.then(response => response.json())
+	.then(data => {
+		dataset=data.microblogs
+		bounds=findMinMax(dataset)
+		geodata=updateMap(dataset)
 
-                    popOverContet += restaurants[prop] + '</br>';
-                }
+		console.log(geodata)
 
-                new mapboxgl.Popup()
-                    .setLngLat(e.features[0].geometry.coordinates[0][0])
-                    .setHTML(popOverContet)
-                    .addTo(map);
+		mapboxgl.accessToken = `pk.
+			eyJ1Ijoid3V6ZWt1biIsImEiOiJja2l3ZW9lNnUwY3k2MnRvZGMyOWllYXJlIn0.
+			uroCzpaFEjccM0RasCvOOQ`
 
-            map.on('mouseenter', 'restaurants', function () {
-                map.getCanvas().style.cursor = 'pointer';
-            });
+		var map = new mapboxgl.Map({
+		container: 'map',
+		style: 'mapbox://styles/wuzekun/ckj3l2gpa2vd919s7dnhglzu2',
+		center: [(bounds[2]+bounds[3])/2,(bounds[0]+bounds[1])/2],
+		zoom: 0,
+		maxBounds:[
+			[bounds[2],bounds[0]],
+			[bounds[3],bounds[1]]],
+		maxZoom: 13
+	})
 
-            map.on('mouseleave', 'restaurants', function () {
-                map.getCanvas().style.cursor = '';
-            });
-    });
+		map.on('load', function () {
+				map.addSource('Vastopolis_Map_dark', {
+				type: 'image',
+				url: 'Vastopolis_Map_dark.png',
+				coordinates: [
+				[bounds[2], bounds[1]],
+				[bounds[3], bounds[1]],
+				[bounds[3], bounds[0]],
+				[bounds[2], bounds[0]]
+				]});
 
+		map.addLayer(
+			{
+				'id': 'Vastopolis_Map_dark',
+				'type': 'raster',
+				'source': 'Vastopolis_Map_dark',
+			})
 
-    </script>
+		map.addSource("point", {
+        	"type": "geojson",
+        	"data": {
+            	"type": "FeatureCollection",
+            	"features": geodata
+        }});
+	
+		map.addLayer(
+		{
+        	"id": "point",
+        	"type": "circle",
+        	"source": "point",
+        	"paint": {
+            	"circle-radius": 5,
+				'circle-color': [
+                'case',
+				['boolean',['feature-state', 'hover'], false],
+				'#e07b39',
+                '#64bdbb' 
+                 
+            ],
+            'circle-opacity': 0.8}
+		})
+		
+		var hoveredStateId = null;
+		map.on('mousemove', 'point', function (e) {
+				if (e.features.length > 0) {
+				if (hoveredStateId) {
+				map.setFeatureState(
+				{ source: 'point', id: hoveredStateId },
+				{ hover: false }
+				);
+				}
+				hoveredStateId = e.features[0].id;
+				console.log(e.features[0].id)
+				map.setFeatureState(
+				{ source: 'point', id: hoveredStateId },
+				{ hover: true }
+				);
+				}
+		});
+ 
+		map.on('mouseleave', 'point', function () {
+				if (hoveredStateId) {
+				map.setFeatureState(
+				{ source: 'point', id: hoveredStateId },
+				{ hover: false }
+				);
+				}
+				hoveredStateId = null;
+		});
+
+		
+		map.on('click', 'point', function (e) {
+
+			map.getCanvas().style.cursor = 'pointer';
+
+			var id= e.features[0].properties.id;
+			var user_id = e.features[0].properties.user_id;
+			var date_posted = e.features[0].properties.date_posted;
+			var time_posted= e.features[0].properties.time_posted;
+
+			var coordinates = e.features[0].geometry.coordinates.slice();
+			var text = e.features[0].properties.text;
+
+  			if (e.features.length > 0) {
+				postIdDisplay.textContent = id;
+				userIdDisplay.textContent = user_id;
+				dateDisplay.textContent = date_posted;
+				timeDisplay.textContent = time_posted;
+  
+			new mapboxgl.Popup()
+				.setLngLat(coordinates)
+				.setHTML(text)
+				.addTo(map);
+		}});
+
+		map.on('mouseenter', 'point', function () {
+				map.getCanvas().style.cursor = 'pointer';
+		});
+ 
+		map.on('mouseleave', 'point', function () {
+				map.getCanvas().style.cursor = '';
+		});
+
+	})
+})
+	
+</script>
+
 </body>
 </html>
