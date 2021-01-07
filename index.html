@@ -20,38 +20,13 @@
       width: 90%;
     }
 
-	.postInfo {
-  	position: absolute;
-  	font-family: sans-serif;
-  	margin-top: 5px;
-  	margin-left: 5px;
-  	padding: 5px;
-  	width: 30%;
-  	border: 2px solid black;
-  	font-size: 14px;
-  	color: #222;
-  	background-color: #fff;
-  	border-radius: 3px;
-	}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class='postInfo'>
-	<div><strong>postId:</strong> <span id='post'></span></div>
-	<div><strong>userId:</strong> <span id='user'></span></div>
-	<div><strong>Date:</strong> <span id='date'></span></div>
-	<div><strong>Time:</strong> <span id='time'></span></div>
-</div>
-
 <script>
-
-var postIdDisplay = document.getElementById('post');
-var userIdDisplay = document.getElementById('user');
-var dateDisplay = document.getElementById('date');
-var timeDisplay = document.getElementById('time');
 
 function findMinMax(arr) {
   let min_lat = arr[0].latitude, max_lat = arr[0].latitude,
@@ -81,15 +56,13 @@ function updateMap(data) {
 }
 
 var dataset
-fetch("data/data.json")
+fetch("data.json")
 	.then(response => response.json())
 	.then(data => {
 		dataset=data.microblogs
 		bounds=findMinMax(dataset)
-		geodata=updateMap(dataset)
-
-		console.log(geodata)
-
+        geodata=updateMap(dataset)
+        
 		mapboxgl.accessToken = `pk.
 			eyJ1Ijoid3V6ZWt1biIsImEiOiJja2l3ZW9lNnUwY3k2MnRvZGMyOWllYXJlIn0.
 			uroCzpaFEjccM0RasCvOOQ`
@@ -142,72 +115,55 @@ fetch("data/data.json")
 				['boolean',['feature-state', 'hover'], false],
 				'#e07b39',
                 '#64bdbb' 
-                 
+            ],
+            'circle-radius': [
+                	'case',
+					['boolean',['feature-state', 'hover'], false],
+					10,
+                	5
             ],
             'circle-opacity': 0.8}
 		})
-		
+        
+        var popup = new mapboxgl.Popup({
+					closeButton: false,
+					closeOnClick: false,
+					})
+
 		var hoveredStateId = null;
 		map.on('mousemove', 'point', function (e) {
-				if (e.features.length > 0) {
-				if (hoveredStateId) {
 				map.setFeatureState(
 				{ source: 'point', id: hoveredStateId },
 				{ hover: false }
 				);
-				}
 				hoveredStateId = e.features[0].id;
-				console.log(e.features[0].id)
 				map.setFeatureState(
 				{ source: 'point', id: hoveredStateId },
-				{ hover: true }
-				);
-				}
-		});
- 
-		map.on('mouseleave', 'point', function () {
-				if (hoveredStateId) {
+				{ hover: true })
+
+                var coordinates = e.features[0].geometry.coordinates.slice();
+                var text = e.features[0].properties.text;
+
+
+  
+			    popup
+				.setLngLat(coordinates)
+				.setHTML(`<div id="popup-container">${text}</div>`)
+                .addTo(map)
+
+                document.getElementById("popup-container").addEventListener("mouseleave", ()=>{
+                    if (hoveredStateId) {
 				map.setFeatureState(
 				{ source: 'point', id: hoveredStateId },
 				{ hover: false }
 				);
 				}
-				hoveredStateId = null;
-		});
-
-		
-		map.on('click', 'point', function (e) {
-
-			map.getCanvas().style.cursor = 'pointer';
-
-			var id= e.features[0].properties.id;
-			var user_id = e.features[0].properties.user_id;
-			var date_posted = e.features[0].properties.date_posted;
-			var time_posted= e.features[0].properties.time_posted;
-
-			var coordinates = e.features[0].geometry.coordinates.slice();
-			var text = e.features[0].properties.text;
-
-  			if (e.features.length > 0) {
-				postIdDisplay.textContent = id;
-				userIdDisplay.textContent = user_id;
-				dateDisplay.textContent = date_posted;
-				timeDisplay.textContent = time_posted;
-  
-			new mapboxgl.Popup()
-				.setLngLat(coordinates)
-				.setHTML(text)
-				.addTo(map);
-		}});
-
-		map.on('mouseenter', 'point', function () {
-				map.getCanvas().style.cursor = 'pointer';
+                hoveredStateId = null;
+                popup.remove();
+                });
+                
 		});
  
-		map.on('mouseleave', 'point', function () {
-				map.getCanvas().style.cursor = '';
-		});
-
 	})
 })
 	
