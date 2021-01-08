@@ -55,6 +55,9 @@ function updateMap(data) {
 	return test
 }
 
+
+		
+
 var dataset
 fetch("data/data.json")
 	.then(response => response.json())
@@ -131,7 +134,7 @@ fetch("data/data.json")
 					})
 
 		var hoveredStateId = null;
-		map.on('mousemove', 'point', function (e) {
+		map.on('mouseenter', 'point', function (e) {
 				map.setFeatureState(
 				{ source: 'point', id: hoveredStateId },
 				{ hover: false }
@@ -143,27 +146,43 @@ fetch("data/data.json")
 
                 var coordinates = e.features[0].geometry.coordinates.slice();
                 var text = e.features[0].properties.text;
-
-
   
 			    popup
 				.setLngLat(coordinates)
 				.setHTML(`<div id="popup-container">${text}</div>`)
-                .addTo(map)
+				.addTo(map)
+				
+				const popupClose =()=>{
+					if (hoveredStateId) {
+						map.setFeatureState(
+						{ source: 'point', id: hoveredStateId },
+						{ hover: false }
+					)}
+            		hoveredStateId = null;
+					popup.remove()}
 
-                document.getElementById("popup-container").addEventListener("mouseleave", ()=>{
-                    if (hoveredStateId) {
-				map.setFeatureState(
-				{ source: 'point', id: hoveredStateId },
-				{ hover: false }
-				);
-				}
-                hoveredStateId = null;
-                popup.remove();
-                });
-                
+				let popupContainer=document.getElementById("popup-container")
+				popupContainer.addEventListener("mouseenter",()=>{
+				popupContainer.addEventListener("mouseleave",()=>{
+				popupClose();})})
 		});
- 
+
+		map.on('mouseleave', 'point', function () {
+			const  popupClose =()=>{
+			if (hoveredStateId) {
+		 			map.setFeatureState(
+		 			{ source: 'point', id: hoveredStateId },
+		 			{ hover: false }
+		 		)}
+             	hoveredStateId = null;
+		 		popup.remove()}
+			
+			timeout=setTimeout(() => {popupClose()}, 500);
+
+			let popupContainer=document.getElementById("popup-container")
+		 		popupContainer.addEventListener("mouseenter",()=>{
+		 			clearTimeout(timeout);})
+		 })
 	})
 })
 	
