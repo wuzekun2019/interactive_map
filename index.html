@@ -8,23 +8,46 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css" rel="stylesheet" />
 <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
+body {
+  background: #404040;
+  color: black;
+  font: 500 20px/26px 'Helvetica Neue', Helvetica, Arial, Sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
 
-    #map {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 90%;
-    }
+.sidebar {
+  width: 33.3333%;
+}
+
+.map {
+  border-left: 1px solid #fff;
+  position: absolute;
+  left: 33.3333%;
+  width: 66.6666%;
+  top: 0;
+  bottom: 0;
+}
+
+.pad2 {
+  padding: 20px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
 
 </style>
 </head>
 <body>
 
-<div id="map"></div>
+	<div class='sidebar'>
+		<div class='heading'>
+		  <h1>Our locations</h1>
+		</div>
+		<div id='listings' class='listings'></div>
+	  </div>
+<div id='map' class='map pad2'>Map</div>
 
 <script>
 
@@ -56,7 +79,6 @@ function updateMap(data) {
 }
 
 
-		
 
 var dataset
 fetch("data/data.json")
@@ -127,7 +149,11 @@ fetch("data/data.json")
             ],
             'circle-opacity': 0.8}
 		})
-        
+
+
+
+
+		
         var popup = new mapboxgl.Popup({
 					closeButton: false,
 					closeOnClick: false,
@@ -149,8 +175,14 @@ fetch("data/data.json")
   
 			    popup
 				.setLngLat(coordinates)
-				.setHTML(`<div id="popup-container">${text}</div>`)
+				.setHTML(`<div id="popup-container">${text}<button class="btn">todo</button></div>
+				`)
 				.addTo(map)
+
+				const btn = document.getElementsByClassName("btn")[0];
+    			btn.addEventListener("click", () => {
+     				 console.log("hello");
+    			});
 				
 				const popupClose =()=>{
 					if (hoveredStateId) {
@@ -166,7 +198,6 @@ fetch("data/data.json")
 				popupContainer.addEventListener("mouseleave",()=>{
 				popupClose();})})
 		});
-
 		map.on('mouseleave', 'point', function () {
 			const  popupClose =()=>{
 			if (hoveredStateId) {
@@ -180,8 +211,10 @@ fetch("data/data.json")
 			timeout=setTimeout(() => {popupClose()}, 500);
 
 			let popupContainer=document.getElementById("popup-container")
-		 		popupContainer.addEventListener("mouseenter",()=>{
+			if(popupContainer){
+				popupContainer.addEventListener("mouseenter",()=>{
 		 			clearTimeout(timeout);})
+			}
 		 })
 	})
 })
